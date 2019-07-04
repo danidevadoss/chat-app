@@ -22,49 +22,74 @@
     </style>
   </head>
   <body>
-    <div class="container">
+    <div class="container" style="width: 100%;">
       <div id="userFormArea" class="row">
         <div class="col-md-12">
           <form id="userForm">
             <div class="form-group">
-              <label> Enter User Name</label>
+              <label>User Name:</label>
               <input
+              style="width: 20%"
                 class="form-control"
                 id="username"
                 required
                 maxlength="15"
               />
               <br />
-              <input type="submit" class="btn btn-primary" value="Start Chat" />
+              <input   type="submit" class="btn btn-primary" value="Start Chat" />
             </div>
           </form>
         </div>
       </div>
       <div id="messageArea" class="row">
-        <div class="col-md-4">
-          <div class="well">
-            <h3>Online Users</h3>
-            <ul class="list-group" id="users"></ul>
+        <div class="col-md-2">
+          <div class="panel panel-primary">
+              <div class="panel-heading">Online Users</div>
+              <div class="panel-body"><ul class="list-group" id="users"></ul> </div>
           </div>
         </div>
-        <div class="col-md-8">
+        <div class="col-md-4 panel ">
+            <div class="panel panel-primary">
+            <div class="panel-heading">Global Chat</div>
+            <div class="panel-body">
           <div id="chatContainer" style="height: 400px; overflow-y: scroll;">
             <div class="chat" id="chat"></div>
           </div>
           <form id="messageForm">
             <div class="form-group">
-              <label> Enter Message</label>
+              <label> Message:</label>
               <input class="form-control" id="message" required> </input>
               <br />
-              <input
+              <button
                 type="submit"
                 class="btn btn-primary"
-                value="Send Message"
-              />
+              >Send</button>
             </div>
           </form>
+          </div>
         </div>
       </div>
+   <!-- <div class="col-md-4 panel ">  
+          <div class="panel panel-primary">
+          <div class="panel-heading" id="chatHeading">Private Chat</div>
+          <div class="panel-body">
+        <div id="chatContainer" style="height: 400px; overflow-y: scroll;">
+          <div class="chat" id="chat"></div>
+        </div>
+        <form id="privateMessageForm">
+          <div class="form-group">
+            <label> Message:</label>
+            <input class="form-control" id="privateMessage" required> </input>
+            <br />
+            <button
+              type="submit"
+              class="btn btn-primary"
+            >Send</button>
+          </div>
+        </form>
+        </div>
+      </div> -->
+    </div>
     </div>
     <script>
       $(function() {
@@ -79,6 +104,7 @@
         let $username = $("#username");
         let $users = $("#users");
         let $chatContainer = $("#chatContainer");
+        let $privateMessage = $("#privateMessage");
 
         $userFormArea.submit(e => {
           e.preventDefault();
@@ -98,6 +124,7 @@
           socket.emit("send message", $message.val());
           $message.val("");
         });
+        
         socket.on("new message", data => {
           $chat.append(
             '<div class="well"> <strong>' +
@@ -116,7 +143,23 @@
           }
           $users.html(html);
         });
+        
+        $privateMessage.click(()=>{
+          socket.emit("private message", $message.val());
+        }) 
+        socket.on("private message", data => {
+          console.log('receive')
+          $chat.append(
+            '<div class="well"> <strong>' +
+              data.user +
+              ": </strong>" +
+              data.msg +
+              "</div>"
+          );
+          $chatContainer.animate({ scrollTop: $chat.height() }, 1000);
+        });
       });
+
     </script>
   </body>
 </html>

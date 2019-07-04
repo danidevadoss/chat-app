@@ -15,6 +15,7 @@ app.get("/", (req, res) => {
 });
 
 io.sockets.on("connection", socket => {
+  console.log(socket.id);
   connections.push(socket);
   console.log(`Connected: ${connections.length} sockets connected`);
   //Disconnect
@@ -29,11 +30,20 @@ io.sockets.on("connection", socket => {
   socket.on("send message", data => {
     io.sockets.emit("new message", { msg: data, user: socket.username });
   });
+
   socket.on("new user", (data, callback) => {
     callback(true);
     socket.username = data;
     users.push(socket.username);
     updateUserNames();
+  });
+
+  socket.on("private message", data => {
+    console.log("private message");
+    socket
+      .to(socket.id)
+      .emit("private message", { msg: data, user: "Private" });
+    socket.emit("private message", { msg: data, user: "Private" });
   });
 
   function updateUserNames() {
