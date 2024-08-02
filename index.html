@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>IO Chat</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      body {
+        margin-top: 30px;
+      }
+      #messageArea {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="width: 100%;">
+      <div id="userFormArea" class="row">
+        <div class="col-md-12">
+          <form id="userForm">
+            <div class="form-group">
+              <label>User Name:</label>
+              <input
+              style="width: 20%"
+                class="form-control"
+                id="username"
+                required
+                maxlength="15"
+              />
+              <br />
+              <input   type="submit" class="btn btn-primary" value="Start Chat" />
+            </div>
+          </form>
+        </div>
+      </div>
+      <div id="messageArea" class="row">
+        <div class="col-md-2">
+          <div class="panel panel-primary">
+              <div class="panel-heading">Online Users</div>
+              <div class="panel-body"><ul class="list-group" id="users"></ul> </div>
+          </div>
+        </div>
+        <div class="col-md-4 panel ">
+            <div class="panel panel-primary">
+            <div class="panel-heading">Global Chat</div>
+            <div class="panel-body">
+          <div id="chatContainer" style="height: 400px; overflow-y: scroll;">
+            <div class="chat" id="chat"></div>
+          </div>
+          <form id="messageForm">
+            <div class="form-group">
+              <label> Message:</label>
+              <input class="form-control" id="message" required> </input>
+              <br />
+              <button
+                type="submit"
+                class="btn btn-primary"
+              >Send</button>
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+   <!-- <div class="col-md-4 panel ">  
+          <div class="panel panel-primary">
+          <div class="panel-heading" id="chatHeading">Private Chat</div>
+          <div class="panel-body">
+        <div id="chatContainer" style="height: 400px; overflow-y: scroll;">
+          <div class="chat" id="chat"></div>
+        </div>
+        <form id="privateMessageForm">
+          <div class="form-group">
+            <label> Message:</label>
+            <input class="form-control" id="privateMessage" required> </input>
+            <br />
+            <button
+              type="submit"
+              class="btn btn-primary"
+            >Send</button>
+          </div>
+        </form>
+        </div>
+      </div> -->
+    </div>
+    </div>
+    <script>
+      $(function() {
+        const socket = io.connect();
+
+        let $messageArea = $("#messageArea");
+        let $messageForm = $("#messageForm");
+        let $message = $("#message");
+        let $chat = $("#chat");
+        let $userFormArea = $("#userFormArea");
+        let $userForm = $("#userForm");
+        let $username = $("#username");
+        let $users = $("#users");
+        let $chatContainer = $("#chatContainer");
+        let $privateMessage = $("#privateMessage");
+
+        $userFormArea.submit(e => {
+          e.preventDefault();
+          socket.emit("new user", $username.val(), data => {
+            if (data) {
+              $userFormArea.hide();
+              $messageArea.show();
+              $message.val("");
+            }
+          });
+          $username.val("");
+        });
+
+        $messageForm.submit(e => {
+          e.preventDefault();
+          console.log("submitted");
+          socket.emit("send message", $message.val());
+          $message.val("");
+        });
+        
+        socket.on("new message", data => {
+          $chat.append(
+            '<div class="well"> <strong>' +
+              data.user +
+              ": </strong>" +
+              data.msg +
+              "</div>"
+          );
+          $chatContainer.animate({ scrollTop: $chat.height() }, 1000);
+        });
+        socket.on("get users", users => {
+          let html = "";
+          for (user of users) {
+            console.log(user);
+            html += '<li class="list-group-item" >' + user + "</li>";
+          }
+          $users.html(html);
+        });
+        
+        $privateMessage.click(()=>{
+          socket.emit("private message", $message.val());
+        }) 
+        socket.on("private message", data => {
+          console.log('receive')
+          $chat.append(
+            '<div class="well"> <strong>' +
+              data.user +
+              ": </strong>" +
+              data.msg +
+              "</div>"
+          );
+          $chatContainer.animate({ scrollTop: $chat.height() }, 1000);
+        });
+      });
+
+    </script>
+  </body>
+</html>
